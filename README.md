@@ -1,6 +1,6 @@
 # scholarly-browser
 
-This template should help get you started developing with Vue 3 in Vite.
+This is a demonstrator Web application for the Scholarly Browser.
 
 ## Recommended IDE Setup
 
@@ -25,6 +25,16 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 
 ```sh
 npm install
+
+# Link the not yet published artifact-explorer library (https://github.com/MellonScholarlyCommunication/artifact-explorer)
+cd ..
+git clone git@github.com:MellonScholarlyCommunication/artifact-explorer.git
+cd artifact-explorer
+npm install
+npm run build
+npm link
+cd ../scholarly-browser
+npm link artifact-explorer
 ```
 
 ### Compile and Hot-Reload for Development
