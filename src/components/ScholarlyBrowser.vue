@@ -23,8 +23,7 @@
               <MDBCardText>
                 <p><b>Actor:</b> <a :href="member.content.actorUrl">{{ member.content.actorName }}</a></p>
                 <p><b>Target:</b> <a :href="member.content.targetUrl">{{ member.content.targetName }}</a></p>
-                <p><b>Object:</b> <a :href="member.content.object">{{ member.content.object }}</a>
-                  ({{ member.content.objectTypes.join(', ') }})</p>
+                <p><b>Object:</b> <a :href="member.content.object">{{ member.content.object }}</a></p>
               </MDBCardText>
             </MDBCardBody>
             <MDBCardFooter class="text-muted">{{ member.metadata.dateTime }}</MDBCardFooter>
@@ -53,7 +52,7 @@ export default {
   data() {
     return {
       url: '',
-      members: [],
+      members: [] as any[],
     };
   },
   methods: {
@@ -70,7 +69,6 @@ export default {
         const content = await getContentOfMember(member);
         content.mainTypes = await this.getMainTypes(content.types);
         content.secondaryTypes = await this.getSecondaryTypes(content.types);
-        content.objectTypes = await Promise.all(content.objectTypes.map(async objectType => await this.getPrefixedProperty(objectType)));
 
         const metadata = await getMetadataOfMember(fragementUrl, member);
         const dt = metadata.dateTime.split(/\D+/);
@@ -82,19 +80,19 @@ export default {
         };
       }));
     },
-    async getMainTypes(types) {
+    async getMainTypes(types: string[]) {
       return await Promise.all(types.filter(type => type.startsWith('https://www.w3.org/ns/activitystreams#')).map(async type => await this.getPrefixedProperty(type)));
     },
-    async getSecondaryTypes(types) {
+    async getSecondaryTypes(types: string[]) {
       return await Promise.all(types.filter(type => !type.startsWith('https://www.w3.org/ns/activitystreams#')).map(async type => await this.getPrefixedProperty(type)));
     },
-    async getPrefixedProperty(property) {
+    async getPrefixedProperty(property: string) {
       // Do a fetch to prefix.cc, this will trigger in a redirect to the prefix.cc page with the prefix that we are looking for.
       const response = await fetch(`http://prefix.cc/?q=${encodeURIComponent(property)}`);
       // Now get the prefix from the URL of the response.
       return response.url.split('prefix.cc/')[1];
     },
-    getStyleByMainType(type) {
+    getStyleByMainType(type: string) {
       switch (type) {
         case 'as:Create':
           return 'success';
