@@ -12,6 +12,8 @@
     <MDBCard>
       <MDBCardBody class="w-100">
         <MDBCardText>
+          <p v-if="loading" class="status-message">Loading notifications...</p>
+          <p v-if="noEventLog" class="status-message"><b>No event log found.</b> Make sure the provided URL contains a ldes:EventStream Link header.</p>
           <MDBCard v-for="(member, index) in members" :key="index"
                    :border="getStyleByMainType(member.content.mainTypes[0])">
             <MDBCardBody class="w-100" style="padding-bottom: 0;">
@@ -53,6 +55,8 @@ export default {
     return {
       url: '',
       members: [] as any[],
+      loading: false,
+      noEventLog: false,
     };
   },
   created() {
@@ -63,6 +67,8 @@ export default {
   },
   methods: {
     async urlUpdated() {
+      this.noEventLog = false;
+      this.loading = false;
       this.$router.push({query: {url: this.url}});
 
       if (!this.url) {
@@ -70,7 +76,16 @@ export default {
         return;
       }
 
-      const artifact = await exploreArtifact(this.url);
+      this.loading = true;
+
+      let artifact: any;
+      try {
+        artifact = await exploreArtifact(this.url);
+      } catch (e) {
+        this.noEventLog = true;
+        this.loading = false;
+        return;
+      }
       const fragementUrl = artifact.relations[0].node;
       const members = await getMembersOfFragment(fragementUrl);
 
@@ -88,6 +103,8 @@ export default {
           metadata: metadata,
         };
       }));
+
+      this.loading = false;
     },
     async getMainTypes(types: string[]) {
       return await Promise.all(types.filter(type => type.startsWith('https://www.w3.org/ns/activitystreams#')).map(async type => await this.getPrefixedProperty(type)));
@@ -133,5 +150,9 @@ h1 {
 
 .card {
   margin-bottom: 2rem;
+}
+
+.status-message {
+  font-style: italic;
 }
 </style>
