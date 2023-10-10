@@ -90,7 +90,7 @@ export default {
       const members = await getMembersOfFragment(fragementUrl);
 
       this.members = await Promise.all(members.map(async member => {
-        const content = await getContentOfMember(member);
+        const content = await getContentOfMember(member) as any;
         content.mainTypes = await this.getMainTypes(content.types);
         content.secondaryTypes = await this.getSecondaryTypes(content.types);
 
