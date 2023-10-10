@@ -23,6 +23,7 @@ jobs:
        - name: Install and Build 🔧
          run: |
            npm i
+           cd node_modules/artifact-explorer && npm i && npm run build && cd ../..  # Install and build artifact-explorer dependency (not done automatically because installed from GitHub).
            npm run build
        - name: Deploy 🚀
          uses: JamesIves/github-pages-deploy-action@releases/v4

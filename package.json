@@ -12,6 +12,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "artifact-explorer": "github:MellonScholarlyCommunication/artifact-explorer",
     "mdb-vue-ui-kit": "^4.0.0",
     "vue": "^3.3.4",
     "vue-router": "^4.2.5"
