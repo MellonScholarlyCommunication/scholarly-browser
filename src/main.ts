@@ -6,7 +6,7 @@ import * as VueRouter from "vue-router";
 
 
 const router = VueRouter.createRouter({
-  history: VueRouter.createWebHistory(),
+  history: VueRouter.createWebHistory(process.env.NODE_ENV === "production" ? "/scholarly-browser/" : "/"),
   routes: [{path: "/", component: App, props: true}],
 });
 
