@@ -7,8 +7,6 @@ on:
   pull_request: {}
 permissions:
   contents: write
-env:
-  SUBDIR: /scholarly-browser/
 jobs:
    build-and-deploy:
      runs-on: ubuntu-latest
