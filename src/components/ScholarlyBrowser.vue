@@ -114,9 +114,11 @@ export default {
     },
     async getPrefixedProperty(property: string) {
       // Do a fetch to prefix.cc, this will trigger in a redirect to the prefix.cc page with the prefix that we are looking for.
-      const response = await fetch(`https://prefixcc-proxy.smessie.com/?q=${encodeURIComponent(property)}`);
+      const response = await fetch(`https://prefixcc-proxy.smessie.com/?q=${encodeURIComponent(property)}`, {
+        method: 'HEAD',
+      });
       // Now get the prefix from the URL of the response.
-      return response.url.split('prefix.cc/')[1];
+      return response.url.split('prefixcc-proxy.smessie.com/')[1];
     },
     getStyleByMainType(type: string) {
       switch (type) {
