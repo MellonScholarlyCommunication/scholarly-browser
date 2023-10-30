@@ -26,15 +26,11 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 ```sh
 npm install
 
-# Link the not yet published artifact-explorer library (https://github.com/MellonScholarlyCommunication/artifact-explorer)
-cd ..
-git clone git@github.com:MellonScholarlyCommunication/artifact-explorer.git
-cd artifact-explorer
+# Build the not yet published artifact-explorer library, only available via GitHub (https://github.com/MellonScholarlyCommunication/artifact-explorer)
+cd node_modules/artifact-explorer
 npm install
 npm run build
-npm link
-cd ../scholarly-browser
-npm link artifact-explorer
+cd -
 ```
 
 ### Compile and Hot-Reload for Development
