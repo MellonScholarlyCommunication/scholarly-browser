@@ -25,6 +25,7 @@
               <MDBCardText>
                 <p><b>Actor:</b> <a :href="member.content.actorUrl">{{ member.content.actorName }}</a></p>
                 <p><b>Target:</b> <a :href="member.content.targetUrl">{{ member.content.targetName }}</a></p>
+                <p v-if="member.content.context"><b>Context:</b> <a :href="'?url=' + member.content.context">{{ member.content.context }}</a></p>
                 <p><b>Object:</b> <a :href="'?url=' + member.content.object">{{ member.content.object }}</a></p>
               </MDBCardText>
             </MDBCardBody>
