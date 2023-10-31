@@ -13,7 +13,8 @@
       <MDBCardBody class="w-100">
         <MDBCardText>
           <p v-if="loading" class="status-message">Loading notifications...</p>
-          <p v-if="noEventLog" class="status-message"><b>No event log found.</b> Make sure the provided URL contains a ldes:EventStream Link header.</p>
+          <p v-if="noEventLog" class="status-message"><b>No event log found.</b> Make sure the provided URL contains a
+            ldes:EventStream Link header.</p>
           <MDBCard v-for="(member, index) in members" :key="index"
                    :border="getStyleByMainType(member.content.mainTypes[0])">
             <MDBCardBody class="w-100" style="padding-bottom: 0;">
@@ -25,8 +26,19 @@
               <MDBCardText>
                 <p><b>Actor:</b> <a :href="member.content.actorUrl">{{ member.content.actorName }}</a></p>
                 <p><b>Target:</b> <a :href="member.content.targetUrl">{{ member.content.targetName }}</a></p>
-                <p v-if="member.content.context"><b>Context:</b> <a :href="'?url=' + member.content.context">{{ member.content.context }}</a></p>
+                <p v-if="member.content.context"><b>Context:</b> <a
+                    :href="'?url=' + member.content.context">{{ member.content.context }}</a></p>
                 <p><b>Object:</b> <a :href="'?url=' + member.content.object">{{ member.content.object }}</a></p>
+                <ul>
+                  <li v-for="(type, index) in member.content.objectTypes" :key="index">
+                    {{ type }}
+                    <ul v-if="type === 'as:Relationship'">
+                      <li><b>Subject:</b> <a :href="member.content.objectRelationship.subject">{{ member.content.objectRelationship.subject }}</a></li>
+                      <li><b>Relationship:</b> <a :href="member.content.objectRelationship.relationship">{{ member.content.objectRelationship.relationship }}</a></li>
+                      <li><b>Object:</b> <a :href="member.content.objectRelationship.object">{{ member.content.objectRelationship.object }}</a></li>
+                    </ul>
+                  </li>
+                </ul>
               </MDBCardText>
             </MDBCardBody>
             <MDBCardFooter class="text-muted">{{ member.metadata.dateTime }}</MDBCardFooter>
@@ -94,6 +106,7 @@ export default {
         const content = await getContentOfMember(member) as any;
         content.mainTypes = await this.getMainTypes(content.types);
         content.secondaryTypes = await this.getSecondaryTypes(content.types);
+        content.objectTypes = await Promise.all(await content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
 
         const metadata = await getMetadataOfMember(fragementUrl, member);
         const dt = metadata.dateTime.split(/\D+/);
