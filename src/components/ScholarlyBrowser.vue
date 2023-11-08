@@ -24,18 +24,50 @@
                 }}
               </MDBCardTitle>
               <MDBCardText>
-                <p><b>Actor:</b> <a :href="member.content.actorUrl">{{ member.content.actorName }}</a></p>
-                <p><b>Target:</b> <a :href="member.content.targetUrl">{{ member.content.targetName }}</a></p>
-                <p v-if="member.content.context"><b>Context:</b> <a
-                    :href="'?url=' + member.content.context">{{ member.content.context }}</a></p>
-                <p><b>Object:</b> <a :href="'?url=' + member.content.object">{{ member.content.object }}</a></p>
+                <p>
+                  <b>Actor: </b>
+                  <a :href="member.content.actorUrl">{{ member.content.actorName ?? member.content.actorUrl }}</a>
+                </p>
+                <p>
+                  <b>Target: </b>
+                  <a v-if="member.content.targetUrl" :href="member.content.targetUrl">{{
+                      member.content.targetName ?? member.content.targetUrl
+                    }}</a>
+                  <i v-else>&lt;not provided&gt;</i>
+                </p>
+                <p>
+                  <b>Context: </b>
+                  <a v-if="member.content.context" :href="'?url=' + member.content.context">{{
+                      member.content.context
+                    }}</a>
+                  <i v-else>&lt;not provided&gt;</i>
+                </p>
+                <p>
+                  <b>Object: </b>
+                  <a :href="'?url=' + member.content.object">{{ member.content.object }}</a>
+                </p>
                 <ul>
                   <li v-for="(type, index) in member.content.objectTypes" :key="index">
                     {{ type }}
                     <ul v-if="type === 'as:Relationship'">
-                      <li><b>Subject:</b> <a :href="member.content.objectRelationship.subject">{{ member.content.objectRelationship.subject }}</a></li>
-                      <li><b>Relationship:</b> <a :href="member.content.objectRelationship.relationship">{{ member.content.objectRelationship.relationship }}</a></li>
-                      <li><b>Object:</b> <a :href="member.content.objectRelationship.object">{{ member.content.objectRelationship.object }}</a></li>
+                      <li>
+                        <b>Subject: </b>
+                        <a :href="member.content.objectRelationship.subject">{{
+                            member.content.objectRelationship.subject
+                          }}</a>
+                      </li>
+                      <li>
+                        <b>Relationship: </b>
+                        <a :href="member.content.objectRelationship.relationship">{{
+                            member.content.objectRelationship.relationship
+                          }}</a>
+                      </li>
+                      <li>
+                        <b>Object: </b>
+                        <a :href="member.content.objectRelationship.object">{{
+                            member.content.objectRelationship.object
+                          }}</a>
+                      </li>
                     </ul>
                   </li>
                 </ul>
