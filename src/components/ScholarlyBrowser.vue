@@ -163,6 +163,11 @@ export default {
       const response = await fetch(`https://prefixcc-proxy.smessie.com/?q=${encodeURIComponent(property)}`, {
         method: 'HEAD',
       });
+      // Check if a redirect happened.
+      if (response.url.includes(`/?q=${encodeURIComponent(property)}`)) {
+        // No redirect happened, so the prefix is not known.
+        return property;
+      }
       // Now get the prefix from the URL of the response.
       return response.url.split('prefixcc-proxy.smessie.com/')[1];
     },
