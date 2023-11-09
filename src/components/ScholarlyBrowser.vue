@@ -114,10 +114,10 @@ export default {
     async urlUpdated() {
       this.noEventLog = false;
       this.loading = false;
+      this.members = [];
       this.$router.push({query: {url: this.url}});
 
       if (!this.url) {
-        this.members = [];
         return;
       }
 
