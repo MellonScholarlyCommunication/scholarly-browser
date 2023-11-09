@@ -83,7 +83,7 @@
 
 <script lang="ts">
 import {MDBCard, MDBCardBody, MDBCardFooter, MDBCardText, MDBCardTitle, MDBContainer, MDBInput} from "mdb-vue-ui-kit";
-import {exploreArtifact, getContentOfMember, getMembersOfFragment, getMetadataOfMember} from "artifact-explorer";
+import {exploreArtifact, getMembersOfFragment} from "artifact-explorer";
 
 export default {
   name: "ScholarlyBrowser",
@@ -131,23 +131,18 @@ export default {
         this.loading = false;
         return;
       }
-      const fragementUrl = artifact.relations[0].node;
-      const members = await getMembersOfFragment(fragementUrl);
+      const fragementUrl = artifact.pages[0];
+      const members = await getMembersOfFragment(fragementUrl, artifact.type);
 
-      this.members = await Promise.all(members.map(async member => {
-        const content = await getContentOfMember(member) as any;
-        content.mainTypes = await this.getMainTypes(content.types);
-        content.secondaryTypes = await this.getSecondaryTypes(content.types);
-        content.objectTypes = await Promise.all(await content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
+      this.members = await Promise.all(members.map(async (member: any) => {
+        member.content.mainTypes = await this.getMainTypes(member.content.types);
+        member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
+        member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
 
-        const metadata = await getMetadataOfMember(fragementUrl, member);
-        const dt = metadata.dateTime.split(/\D+/);
-        metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
+        const dt = member.metadata.dateTime.split(/\D+/);
+        member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
 
-        return {
-          content: content,
-          metadata: metadata,
-        };
+        return member;
       }));
 
       this.loading = false;
