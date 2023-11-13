@@ -100,6 +100,7 @@ export default {
     return {
       url: '',
       members: [] as any[],
+      pages: [] as {uri: string, sort: any}[],
       loading: false,
       noEventLog: false,
     };
@@ -131,21 +132,28 @@ export default {
         this.loading = false;
         return;
       }
-      const fragementUrl = artifact.pages[0];
-      const members = await getMembersOfFragment(fragementUrl, artifact.type);
+      let firstPage = true;
+      artifact.pages.on('data', async (page: any) => {
+        this.pages.push(page);
+        if (firstPage) {
+          firstPage = false;
+          const members = await getMembersOfFragment(artifact.url, page.uri, artifact.type);
 
-      this.members = await Promise.all(members.map(async (member: any) => {
-        member.content.mainTypes = await this.getMainTypes(member.content.types);
-        member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
-        member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
+          members.on('data', async (member: any) => {
+            member = await member;
+            member.content.mainTypes = await this.getMainTypes(member.content.types);
+            member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
+            member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
 
-        const dt = member.metadata.dateTime.split(/\D+/);
-        member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
+            const dt = member.metadata.dateTime.split(/\D+/);
+            member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
 
-        return member;
-      }));
+            this.members.push(member);
 
-      this.loading = false;
+            this.loading = false;
+          });
+        }
+      });
     },
     async getMainTypes(types: string[]) {
       return await Promise.all(types.filter(type => type.startsWith('https://www.w3.org/ns/activitystreams#')).map(async type => await this.getPrefixedProperty(type)));
