@@ -152,6 +152,10 @@ export default {
 
             this.loading = false;
           });
+
+          members.on('end', () => {
+            this.loading = false;
+          });
         }
       });
     },
