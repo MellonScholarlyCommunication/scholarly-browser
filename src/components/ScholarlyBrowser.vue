@@ -9,6 +9,9 @@
         </MDBCardText>
       </MDBCardBody>
     </MDBCard>
+
+    <PagesPagination :load-page="loadPage" :pages="pages.sort((a, b) => a.sort < b.sort ? -1 : 1)"></PagesPagination>
+
     <MDBCard>
       <MDBCardBody class="w-100">
         <MDBCardText>
@@ -78,16 +81,26 @@
         </MDBCardText>
       </MDBCardBody>
     </MDBCard>
+
+    <PagesPagination :load-page="loadPage" :pages="pages.sort((a, b) => a.sort < b.sort ? -1 : 1)"></PagesPagination>
   </MDBContainer>
 </template>
 
 <script lang="ts">
 import {MDBCard, MDBCardBody, MDBCardFooter, MDBCardText, MDBCardTitle, MDBContainer, MDBInput} from "mdb-vue-ui-kit";
 import {exploreArtifact, getMembersOfFragment} from "artifact-explorer";
+import PagesPagination from "@/components/PagesPagination.vue";
+
+type Page = {
+  uri: string,
+  sort: any,
+  active: boolean,
+};
 
 export default {
   name: "ScholarlyBrowser",
   components: {
+    PagesPagination,
     MDBContainer,
     MDBCard,
     MDBCardBody,
@@ -100,9 +113,10 @@ export default {
     return {
       url: '',
       members: [] as any[],
-      pages: [] as {uri: string, sort: any}[],
+      pages: [] as Page[],
       loading: false,
       noEventLog: false,
+      artifact: undefined as any,
     };
   },
   created() {
@@ -115,6 +129,8 @@ export default {
     async urlUpdated() {
       this.noEventLog = false;
       this.loading = false;
+      this.artifact = undefined;
+      this.pages = [];
       this.members = [];
       this.$router.push({query: {url: this.url}});
 
@@ -124,40 +140,22 @@ export default {
 
       this.loading = true;
 
-      let artifact: any;
       try {
-        artifact = await exploreArtifact(this.url);
+        this.artifact = await exploreArtifact(this.url);
       } catch (e) {
         this.noEventLog = true;
         this.loading = false;
         return;
       }
       let firstPage = true;
-      artifact.pages.on('data', async (page: any) => {
+
+      this.artifact.pages.on('data', async (page: any) => {
+        page.active = false;
         this.pages.push(page);
         if (firstPage) {
           firstPage = false;
-          const members = await getMembersOfFragment(artifact.url, page.uri, artifact.type);
 
-          members.on('data', async (member: any) => {
-            member = await member;
-            member.content.mainTypes = await this.getMainTypes(member.content.types);
-            member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
-            member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
-
-            if (member.metadata.dateTime) {
-              const dt = member.metadata.dateTime.split(/\D+/);
-              member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
-            }
-
-            this.members.push(member);
-
-            this.loading = false;
-          });
-
-          members.on('end', () => {
-            this.loading = false;
-          });
+          await this.loadPage(page);
         }
       });
     },
@@ -200,6 +198,35 @@ export default {
         default:
           return 'light';
       }
+    },
+    async loadPage(page: Page) {
+      this.pages.forEach(page => page.active = false);
+      page.active = true;
+
+      this.members = [];
+      this.loading = true;
+
+      const members = await getMembersOfFragment(this.artifact.url, page.uri, this.artifact.type);
+
+      members.on('data', async (member: any) => {
+        member = await member;
+        member.content.mainTypes = await this.getMainTypes(member.content.types);
+        member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
+        member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
+
+        if (member.metadata.dateTime) {
+          const dt = member.metadata.dateTime.split(/\D+/);
+          member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
+        }
+
+        this.members.push(member);
+
+        this.loading = false;
+      });
+
+      members.on('end', () => {
+        this.loading = false;
+      });
     }
   }
 }
