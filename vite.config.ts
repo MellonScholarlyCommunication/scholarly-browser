@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import NodeModulesPolyfillPlugin from "@esbuild-plugins/node-modules-polyfill";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,4 +18,11 @@ export default defineConfig({
     }
   },
   base: './',
+  optimizeDeps: {
+    esbuildOptions: {
+      plugins: [
+        NodeModulesPolyfillPlugin(),
+      ],
+    }
+  }
 })

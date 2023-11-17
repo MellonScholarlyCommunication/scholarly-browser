@@ -12,6 +12,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "artifact-explorer": "github:MellonScholarlyCommunication/artifact-explorer",
     "mdb-vue-ui-kit": "^4.0.0",
     "vue": "^3.3.4",
