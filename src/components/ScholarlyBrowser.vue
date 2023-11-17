@@ -145,8 +145,10 @@ export default {
             member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
             member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
 
-            const dt = member.metadata.dateTime.split(/\D+/);
-            member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
+            if (member.metadata.dateTime) {
+              const dt = member.metadata.dateTime.split(/\D+/);
+              member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
+            }
 
             this.members.push(member);
 
