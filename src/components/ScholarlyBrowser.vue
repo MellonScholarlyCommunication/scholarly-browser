@@ -1,4 +1,14 @@
 <template>
+  <a href="https://github.com/MellonScholarlyCommunication/scholarly-browser"
+  ><img
+      loading="lazy"
+      width="149"
+      height="149"
+      src="/forkme_right_gray.png"
+      class="attachment-full size-full fork"
+      alt="Fork me on GitHub"
+      data-recalc-dims="1"
+  /></a>
   <MDBContainer>
     <h1>Scholarly Browser</h1>
 
@@ -243,5 +253,10 @@ h1 {
 
 .status-message {
   font-style: italic;
+}
+
+.fork {
+  float: right;
+  margin-top: -3em;
 }
 </style>
