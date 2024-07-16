@@ -20,8 +20,6 @@
       </MDBCardBody>
     </MDBCard>
 
-    <PagesPagination :load-page="loadPage" :pages="pages.sort((a, b) => a.sort < b.sort ? -1 : 1)"></PagesPagination>
-
     <MDBCard>
       <MDBCardBody class="w-100">
         <MDBCardText>
@@ -29,77 +27,67 @@
           <p v-if="noEventLog" class="status-message"><b>No event log found.</b> Make sure the provided URL contains a
             ldes:EventStream Link header.</p>
           <MDBCard v-for="(member, index) in members" :key="index"
-                   :border="getStyleByMainType(member.content.mainTypes[0])">
+                   :border="getStyleByMainType(member.mainTypes[0])">
             <MDBCardBody class="w-100" style="padding-bottom: 0;">
-              <MDBCardTitle>{{ member.content.mainTypes.join(', ') }}</MDBCardTitle>
+              <MDBCardTitle>{{ member.mainTypes.join(', ') }}</MDBCardTitle>
               <MDBCardTitle subtitle class="mb-2 text-muted">{{
-                  member.content.secondaryTypes.join(', ')
+                  member.secondaryTypes.join(', ')
                 }}
               </MDBCardTitle>
               <MDBCardText>
                 <p>
                   <b>Actor: </b>
-                  <a :href="member.content.actorUrl">{{ member.content.actorName ?? member.content.actorUrl }}</a>
+                  <a :href="member.actorUrl">{{ member.actorName ?? member.actorUrl }}</a>
                 </p>
                 <p>
                   <b>Target: </b>
-                  <a v-if="member.content.targetUrl" :href="member.content.targetUrl">{{
-                      member.content.targetName ?? member.content.targetUrl
+                  <a v-if="member.targetUrl" :href="member.targetUrl">{{
+                      member.targetName ?? member.targetUrl
                     }}</a>
                   <i v-else>&lt;not provided&gt;</i>
                 </p>
                 <p>
                   <b>Context: </b>
-                  <a v-if="member.content.context" :href="'?url=' + member.content.context">{{
-                      member.content.context
-                    }}</a>
+                  <a v-if="member.context" :href="'?url=' + member.context">{{ member.context }}</a>
                   <i v-else>&lt;not provided&gt;</i>
                 </p>
                 <p>
                   <b>Object: </b>
-                  <a :href="'?url=' + member.content.object">{{ member.content.object }}</a>
+                  <a :href="'?url=' + member.object">{{ member.object }}</a>
                 </p>
                 <ul>
-                  <li v-for="(type, index) in member.content.objectTypes" :key="index">
+                  <li v-for="(type, index) in member.objectTypes" :key="index">
                     {{ type }}
                     <ul v-if="type === 'as:Relationship'">
                       <li>
                         <b>Subject: </b>
-                        <a :href="member.content.objectRelationship.subject">{{
-                            member.content.objectRelationship.subject
-                          }}</a>
+                        <a :href="member.objectRelationship.subject">{{ member.objectRelationship.subject }}</a>
                       </li>
                       <li>
                         <b>Relationship: </b>
-                        <a :href="member.content.objectRelationship.relationship">{{
-                            member.content.objectRelationship.relationship
+                        <a :href="member.objectRelationship.relationship">{{
+                            member.objectRelationship.relationship
                           }}</a>
                       </li>
                       <li>
                         <b>Object: </b>
-                        <a :href="member.content.objectRelationship.object">{{
-                            member.content.objectRelationship.object
-                          }}</a>
+                        <a :href="member.objectRelationship.object">{{ member.objectRelationship.object }}</a>
                       </li>
                     </ul>
                   </li>
                 </ul>
               </MDBCardText>
             </MDBCardBody>
-            <MDBCardFooter class="text-muted">{{ member.metadata.dateTime }}</MDBCardFooter>
           </MDBCard>
         </MDBCardText>
       </MDBCardBody>
     </MDBCard>
-
-    <PagesPagination :load-page="loadPage" :pages="pages.sort((a, b) => a.sort < b.sort ? -1 : 1)"></PagesPagination>
   </MDBContainer>
 </template>
 
 <script lang="ts">
-import {MDBCard, MDBCardBody, MDBCardFooter, MDBCardText, MDBCardTitle, MDBContainer, MDBInput} from "mdb-vue-ui-kit";
-import {exploreArtifact, getMembersOfFragment} from "artifact-explorer";
-import PagesPagination from "@/components/PagesPagination.vue";
+import {MDBCard, MDBCardBody, MDBCardText, MDBCardTitle, MDBContainer, MDBInput} from "mdb-vue-ui-kit";
+import {exploreArtifact} from "artifact-explorer";
 
 type Page = {
   uri: string,
@@ -110,13 +98,11 @@ type Page = {
 export default {
   name: "ScholarlyBrowser",
   components: {
-    PagesPagination,
     MDBContainer,
     MDBCard,
     MDBCardBody,
     MDBCardText,
     MDBInput,
-    MDBCardFooter,
     MDBCardTitle,
   },
   data() {
@@ -151,23 +137,26 @@ export default {
       this.loading = true;
 
       try {
-        this.artifact = await exploreArtifact(this.url);
+        const membersStream: any = await exploreArtifact(this.url);
+        membersStream.on('data', async (member: any) => {
+          member = await member;
+          member.mainTypes = await this.getMainTypes(member.types);
+          member.secondaryTypes = await this.getSecondaryTypes(member.types);
+          member.objectTypes = await Promise.all(await member?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
+
+          this.members.push(member);
+
+          this.loading = false;
+        });
+
+        membersStream.on('end', () => {
+          this.loading = false;
+        });
       } catch (e) {
         this.noEventLog = true;
         this.loading = false;
         return;
       }
-      let firstPage = true;
-
-      this.artifact.pages.on('data', async (page: any) => {
-        page.active = false;
-        this.pages.push(page);
-        if (firstPage) {
-          firstPage = false;
-
-          await this.loadPage(page);
-        }
-      });
     },
     async getMainTypes(types: string[]) {
       return await Promise.all(types.filter(type => type.startsWith('https://www.w3.org/ns/activitystreams#')).map(async type => await this.getPrefixedProperty(type)));
@@ -209,35 +198,6 @@ export default {
           return 'light';
       }
     },
-    async loadPage(page: Page) {
-      this.pages.forEach(page => page.active = false);
-      page.active = true;
-
-      this.members = [];
-      this.loading = true;
-
-      const members = await getMembersOfFragment(this.artifact.url, page.uri, this.artifact.type);
-
-      members.on('data', async (member: any) => {
-        member = await member;
-        member.content.mainTypes = await this.getMainTypes(member.content.types);
-        member.content.secondaryTypes = await this.getSecondaryTypes(member.content.types);
-        member.content.objectTypes = await Promise.all(await member.content?.objectTypes.map(async (type: string) => await this.getPrefixedProperty(type))) ?? [];
-
-        if (member.metadata.dateTime) {
-          const dt = member.metadata.dateTime.split(/\D+/);
-          member.metadata.dateTime = new Date(Date.UTC(dt[0], --dt[1], dt[2], dt[3], dt[4], dt[5], dt[6])).toLocaleString();
-        }
-
-        this.members.push(member);
-
-        this.loading = false;
-      });
-
-      members.on('end', () => {
-        this.loading = false;
-      });
-    }
   }
 }
 </script>
