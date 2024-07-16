@@ -15,7 +15,9 @@
     <MDBCard>
       <MDBCardBody class="w-100">
         <MDBCardText>
-          <MDBInput label="URL" v-model="url" @change="urlUpdated"/>
+          <MDBInput label="Artifact URL" v-model="artifactUrl" @change="urlUpdated"/>
+          <MDBInput label="Service Node URL" v-model="serviceNodeUrl" @change="urlUpdated" class="mt-3"/>
+          <small>Provide an optional service node URL to retrieve the event notifications from the service node.</small>
         </MDBCardText>
       </MDBCardBody>
     </MDBCard>
@@ -89,12 +91,6 @@
 import {MDBCard, MDBCardBody, MDBCardText, MDBCardTitle, MDBContainer, MDBInput} from "mdb-vue-ui-kit";
 import {exploreArtifact} from "artifact-explorer";
 
-type Page = {
-  uri: string,
-  sort: any,
-  active: boolean,
-};
-
 export default {
   name: "ScholarlyBrowser",
   components: {
@@ -107,17 +103,23 @@ export default {
   },
   data() {
     return {
-      url: '',
+      artifactUrl: '',
+      serviceNodeUrl: '',
       members: [] as any[],
-      pages: [] as Page[],
       loading: false,
       noEventLog: false,
-      artifact: undefined as any,
+      lastUpdated: 0,
     };
   },
   created() {
-    this.$watch('$route.query.url', () => {
-      this.url = this.$route.query.url as string || '';
+    this.$watch('$route.query.artifactUrl', () => {
+      this.artifactUrl = this.$route.query.artifactUrl as string || '';
+      this.artifactUrl.trim();
+      this.urlUpdated();
+    });
+    this.$watch('$route.query.serviceNodeUrl', () => {
+      this.serviceNodeUrl = this.$route.query.serviceNodeUrl as string || '';
+      this.serviceNodeUrl.trim();
       this.urlUpdated();
     });
   },
@@ -125,19 +127,21 @@ export default {
     async urlUpdated() {
       this.noEventLog = false;
       this.loading = false;
-      this.artifact = undefined;
-      this.pages = [];
       this.members = [];
-      this.$router.push({query: {url: this.url}});
+      if (Date.now() - this.lastUpdated < 1000) {
+        return;
+      }
+      this.lastUpdated = Date.now();
+      this.$router.push({query: {artifactUrl: this.artifactUrl, serviceNodeUrl: this.serviceNodeUrl}});
 
-      if (!this.url) {
+      if (!this.artifactUrl) {
         return;
       }
 
       this.loading = true;
 
       try {
-        const membersStream: any = await exploreArtifact(this.url);
+        const membersStream: any = await exploreArtifact(this.artifactUrl.trim(), this.serviceNodeUrl.trim());
         membersStream.on('data', async (member: any) => {
           member = await member;
           member.mainTypes = await this.getMainTypes(member.types);
