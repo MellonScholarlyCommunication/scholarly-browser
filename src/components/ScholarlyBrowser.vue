@@ -150,11 +150,23 @@ export default {
 
           this.members.push(member);
 
-          this.loading = false;
+          this.loading = true;
         });
 
         membersStream.on('end', () => {
           this.loading = false;
+          this.members = this.members.sort( (a:any,b:any) => {
+            console.log(`${a.published}`);
+            if (a.published < b.published) {
+              return -1;
+            }
+            else if (a.published > b.published ) {
+              return 1;
+            }
+            else {
+              return 0;
+            }
+          });
         });
       } catch (e) {
         this.noEventLog = true;
